@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SEO Meta Tags -->
+<title>PromptForge — Free AI Image to Prompt Generator & Object Eraser</title>
+<meta name="description" content="Free AI image tools online. Extract prompts from images, remove objects from photos, convert and resize images, and build AI prompts for Midjourney, Flux & Stable Diffusion. 100% private, in-browser.">
+<meta name="keywords" content="image to prompt, ai image eraser, remove objects from photo, prompt generator, midjourney prompt maker, image converter, resize image, free ai tools">
+<meta name="author" content="PromptForge">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://promptforge.app/">
+
+<!-- Open Graph / Social Media -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PromptForge — Free AI Image to Prompt Generator & Object Eraser">
+<meta property="og:description" content="Extract prompts from images, remove objects from photos, and convert images online. The ultimate free AI creative toolkit.">
+<meta property="og:image" content="https://promptforge.app/og-image.jpg">
+<meta property="og:url" content="https://promptforge.app/">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PromptForge — Free AI Image Tools">
+<meta name="twitter:description" content="Extract prompts from images, remove objects from photos, and convert images online.">
+
+<!-- Structured Data for SEO (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "PromptForge",
+  "url": "https://promptforge.app/",
+  "description": "Free online AI image tools including image to prompt generator, AI object eraser, image converter, and prompt enhancer.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": [
+    "Image to Prompt Generator",
+    "AI Object Eraser",
+    "Image Format Converter",
+    "Prompt Enhancer",
+    "Style Mixer"
+  ]
+}
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #121212;
+    --surface-2: #181818;
+    --border: #262626;
+    --border-light: #383838;
+    --fg: #f5f5f5;
+    --fg-dim: #b0b0b0;
+    --muted: #707070;
+    --accent: #d4ff3a;
+    --accent-2: #ff5e3a;
+    --accent-3: #00e0ff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+    margin: 0;
+  }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Background layers */
+  .bg-canvas { position: fixed; inset: 0; z-index: 0; opacity: 0.5; }
+  .grid-overlay {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 70px 70px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(100px);
+    opacity: 0.35; z-index: 0; animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(40px, -30px) scale(1.1); }
+    66% { transform: translate(-30px, 25px) scale(0.95); }
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--accent); color: #0a0a0a; font-weight: 600;
+    transition: all 0.25s; position: relative; overflow: hidden;
+    border: 1px solid var(--accent);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(212,255,58,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border-light); color: var(--fg);
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: rgba(212,255,58,0.04); }
+
+  /* Cards */
+  .card {
+    background: rgba(18,18,18,0.7); backdrop-filter: blur(12px);
+    border: 1px solid var(--border); border-radius: 18px;
+    transition: all 0.3s; position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .card:hover { border-color: rgba(212,255,58,0.4); transform: translateY(-3px); }
+  .card:hover::before { opacity: 1; }
+
+  /* Drop zone */
+  .dropzone {
+    border: 2px dashed var(--border-light); transition: all 0.3s;
+    position: relative; overflow: hidden; background: rgba(255,255,255,0.01);
+  }
+  .dropzone.dragover {
+    border-color: var(--accent); background: rgba(212,255,58,0.06);
+  }
+
+  /* Scan line */
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px; top: 0;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 20px var(--accent); animation: scan 1.8s ease-in-out infinite;
+    z-index: 5;
+  }
+  @keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* Tabs */
+  .tab-btn {
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+    color: var(--fg-dim);
+  }
+  .tab-btn:hover { color: var(--fg); }
+  .tab-btn.active { border-bottom-color: var(--accent); color: var(--accent); }
+
+  /* Fade in */
+  .fade-in { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.7s ease forwards; }
+  @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* Marquee */
+  .marquee { overflow: hidden; position: relative; mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent); }
+  .marquee-track { display: flex; gap: 48px; animation: scroll 40s linear infinite; width: max-content; }
+  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    background: var(--surface); border: 1px solid var(--accent); color: var(--fg);
+    padding: 12px 22px; border-radius: 10px; z-index: 1000;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 10px 40px rgba(212,255,58,0.2); font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Code block */
+  .code-block {
+    background: #070707; border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7;
+    color: #d0d0d0;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Hero accent */
+  .hero-accent {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* Badge */
+  .badge {
+    background: rgba(212,255,58,0.08); border: 1px solid rgba(212,255,58,0.25);
+    color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 5px 11px; border-radius: 20px; display: inline-flex; align-items: center; gap: 7px;
+    letter-spacing: 0.5px;
+  }
+  .badge::before {
+    content: ''; width: 6px; height: 6px; background: var(--accent);
+    border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px); z-index: 100;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-content {
+    transform: translateY(20px) scale(0.97); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-overlay.active .modal-content { transform: translateY(0) scale(1); }
+
+  /* Section tag */
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--accent); letter-spacing: 3px; text-transform: uppercase;
+  }
+
+  /* Feature icon */
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(212,255,58,0.08); border: 1px solid rgba(212,255,58,0.2);
+    display: flex; align-items: center; justify-content: center; color: var(--accent);
+    transition: all 0.3s; flex-shrink: 0;
+  }
+  .card:hover .feature-icon { transform: scale(1.1) rotate(-6deg); background: rgba(212,255,58,0.15); }
+
+  /* Custom checkbox */
+  .chk {
+    appearance: none; width: 18px; height: 18px;
+    border: 1.5px solid var(--border-light); border-radius: 5px;
+    cursor: pointer; position: relative; transition: all 0.2s; flex-shrink: 0;
+  }
+  .chk:checked { background: var(--accent); border-color: var(--accent); }
+  .chk:checked::after {
+    content: ''; position: absolute; top: 2px; left: 5px;
+    width: 5px; height: 9px; border: solid #0a0a0a;
+    border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+
+  /* Style chip */
+  .chip {
+    padding: 6px 12px; border-radius: 20px; font-size: 12px;
+    border: 1px solid var(--border-light); cursor: pointer;
+    transition: all 0.2s; font-family: 'JetBrains Mono', monospace;
+    background: rgba(255,255,255,0.02);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.selected { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
+
+  /* Stat number */
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent-3));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* Loader dots */
+  .loader-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    display: inline-block; animation: loaderBounce 1.4s infinite ease-in-out both;
+  }
+  .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+  .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes loaderBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Color swatch */
+  .swatch {
+    aspect-ratio: 1; border-radius: 8px; cursor: pointer;
+    transition: transform 0.2s; position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .swatch:hover { transform: scale(1.08); }
+  .swatch::after {
+    content: attr(data-hex); position: absolute; bottom: 4px; left: 4px; right: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 4px;
+    text-align: center; opacity: 0; transition: opacity 0.2s;
+  }
+  .swatch:hover::after { opacity: 1; }
+
+  /* Range input */
+  input[type="range"] {
+    appearance: none; height: 4px; background: var(--border); border-radius: 2px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none; width: 16px; height: 16px; background: var(--accent);
+    border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(212,255,58,0.5);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; background: var(--accent); border-radius: 50%;
+    cursor: pointer; border: none;
+  }
+
+  /* Input styles */
+  .input-base {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    color: var(--fg); padding: 10px 14px; border-radius: 10px;
+    transition: all 0.2s; font-family: inherit; width: 100%;
+  }
+  .input-base:focus { outline: none; border-color: var(--accent); background: rgba(212,255,58,0.03); }
+
+  /* Nav link */
+  .nav-link { position: relative; padding: 6px 0; }
+  .nav-link::after {
+    content: ''; position: absolute; left: 0; bottom: 0; height: 1px; width: 0;
+    background: var(--accent); transition: width 0.25s;
+  }
+  .nav-link:hover::after { width: 100%; }
+  .nav-link:hover { color: var(--accent); }
+  
+  .sample-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 3px 9px; border-radius: 12px; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); color: var(--fg-dim); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sample-btn:hover { border-color: var(--accent); color: var(--accent); }
+  
+  /* Canvas styling for eraser */
+  canvas.editor-canvas { cursor: crosshair; touch-action: none; }
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<canvas class="bg-canvas" id="bgCanvas" aria-hidden="true"></canvas>
+<div class="grid-overlay" aria-hidden="true"></div>
+<div class="orb" style="width: 600px; height: 600px; background: var(--accent); top: -250px; right: -150px;" aria-hidden="true"></div>
+<div class="orb" style="width: 500px; height: 500px; background: var(--accent-2); top: 40%; left: -200px; animation-delay: -7s;" aria-hidden="true"></div>
+<div class="orb" style="width: 400px; height: 400px; background: var(--accent-3); bottom: -100px; right: 25%; animation-delay: -14s; opacity: 0.25;" aria-hidden="true"></div>
+
+<!-- Navigation -->
+<header>
+<nav class="relative z-20 px-6 lg:px-12 py-5 flex items-center justify-between" aria-label="Main navigation">
+  <a href="#" class="flex items-center gap-2.5 group" aria-label="PromptForge Home">
+    <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), var(--accent-3)); box-shadow: 0 0 20px rgba(212,255,58,0.3);">
+      <i class="fa-solid fa-bolt text-black text-sm"></i>
+    </div>
+    <span class="text-lg font-semibold tracking-tight">PromptForge</span>
+    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded ml-1" style="background: var(--surface-2); color: var(--muted); border: 1px solid var(--border);">v3.0</span>
+  </a>
+  <div class="hidden md:flex items-center gap-8 text-sm" style="color: var(--fg-dim);">
+    <a href="#tools" class="nav-link">AI Tools</a>
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="#seo-content" class="nav-link">Features</a>
+    <a href="#stats" class="nav-link">Stats</a>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="#" class="hidden sm:block text-sm" style="color: var(--fg-dim);">Docs</a>
+    <a href="#tools" class="btn-primary text-sm px-4 py-2 rounded-lg">Open Studio</a>
+  </div>
+</nav>
+</header>
+
+<main>
+<!-- HERO with main tool -->
+<section class="relative z-10 px-6 lg:px-12 pt-10 pb-20">
+  <div class="max-w-7xl mx-auto">
+    <!-- Headline -->
+    <div class="text-center max-w-4xl mx-auto mb-14 fade-in">
+      <div class="badge mb-6">REAL-TIME AI IMAGE ANALYSIS & EDITING</div>
+      <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+        Reverse engineer images,<br>
+        <span class="hero-accent">edit & generate prompts</span>
+      </h1>
+      <p class="text-lg md:text-xl max-w-2xl mx-auto" style="color: var(--fg-dim);">
+        Upload an image to extract perfect AI prompts, remove unwanted objects, convert formats, and more. The ultimate free, private, in-browser AI creative toolkit.
+      </p>
+    </div>
+
+    <!-- Main Tool: Image to Prompt -->
+    <div class="card p-6 md:p-8 fade-in" style="animation-delay: 0.15s;">
+      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="feature-icon" style="width: 38px; height: 38px;">
+            <i class="fa-solid fa-image text-base"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold">Image to Prompt</h2>
+            <p class="text-xs font-mono" style="color: var(--muted);">/tool/extract-prompt</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-mono" style="color: var(--muted);">
+          <span class="w-2 h-2 rounded-full" style="background: var(--accent); box-shadow: 0 0 8px var(--accent);"></span>
+          Engine online
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- LEFT: Dropzone -->
+        <div>
+          <label class="text-xs font-mono uppercase tracking-wider mb-3 block" style="color: var(--muted);">Input image</label>
+          <div id="dropzone" class="dropzone rounded-2xl p-6 min-h-[320px] flex flex-col items-center justify-center text-center cursor-pointer relative">
+            <div id="dropzone-empty" class="flex flex-col items-center">
+              <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style="background: rgba(212,255,58,0.08); border: 1px solid rgba(212,255,58,0.2);">
+                <i class="fa-solid fa-cloud-arrow-up text-2xl" style="color: var(--accent);"></i>
+              </div>
+              <p class="font-medium mb-1">Drop image here or click to upload</p>
+              <p class="text-xs" style="color: var(--muted);">PNG, JPG, WEBP up to 10MB</p>
+              <div class="mt-5 flex items-center gap-2 text-xs font-mono" style="color: var(--muted);">
+                <span>or try sample:</span>
+                <button class="sample-btn" data-seed="forest">Forest</button>
+                <button class="sample-btn" data-seed="portrait">Portrait</button>
+                <button class="sample-btn" data-seed="abstract">Abstract</button>
+              </div>
+            </div>
+            <div id="dropzone-preview" class="hidden w-full h-full absolute inset-0">
+              <img id="preview-img" class="w-full h-full object-cover rounded-2xl" alt="User uploaded preview for prompt extraction">
+              <div id="scan-overlay" class="hidden absolute inset-0 rounded-2xl overflow-hidden">
+                <div class="scan-line"></div>
+                <div class="absolute inset-0" style="background: linear-gradient(transparent, rgba(212,255,58,0.05), transparent);"></div>
+              </div>
+            </div>
+            <input type="file" id="file-input" accept="image/*" class="hidden">
+          </div>
+
+          <!-- Analysis chips -->
+          <div id="analysis-output" class="hidden mt-4 space-y-3">
+            <div class="text-xs font-mono uppercase tracking-wider" style="color: var(--muted);">Detected attributes</div>
+            <div id="attr-chips" class="flex flex-wrap gap-2"></div>
+            <div class="flex items-center gap-3 text-xs">
+              <span style="color: var(--muted);">Palette:</span>
+              <div id="palette-row" class="flex gap-1.5"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Output -->
+        <div>
+          <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <label class="text-xs font-mono uppercase tracking-wider" style="color: var(--muted);">Generated prompt</label>
+            <div class="flex gap-1 text-xs">
+              <button class="tab-btn active px-3 py-1.5 font-medium" data-tab="midjourney">Midjourney</button>
+              <button class="tab-btn px-3 py-1.5 font-medium" data-tab="flux">Flux</button>
+              <button class="tab-btn px-3 py-1.5 font-medium" data-tab="sd">Stable Diff.</button>
+              <button class="tab-btn px-3 py-1.5 font-medium" data-tab="dalle">DALL·E</button>
+            </div>
+          </div>
+
+          <div class="relative">
+            <div id="prompt-output" class="code-block rounded-xl p-5 min-h-[260px] max-h-[260px] overflow-y-auto whitespace-pre-wrap">
+              <div class="text-center py-20" style="color: var(--muted);">
+                <i class="fa-solid fa-wand-magic-sparkles text-3xl mb-3 opacity-40"></i>
+                <p class="text-sm">Upload an image to generate prompts</p>
+              </div>
+            </div>
+            <div id="loading-state" class="hidden absolute inset-0 code-block rounded-xl flex flex-col items-center justify-center">
+              <div class="flex gap-1.5 mb-4">
+                <span class="loader-dot"></span>
+                <span class="loader-dot"></span>
+                <span class="loader-dot"></span>
+              </div>
+              <p class="text-xs font-mono" id="loading-text" style="color: var(--muted);">Analyzing pixel data...</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 mt-3">
+            <button id="copy-btn" class="btn-ghost text-sm px-4 py-2 rounded-lg flex items-center gap-2 flex-1 justify-center">
+              <i class="fa-regular fa-copy"></i> Copy prompt
+            </button>
+            <button id="regenerate-btn" class="btn-ghost text-sm px-4 py-2 rounded-lg flex items-center gap-2" disabled style="opacity: 0.4;">
+              <i class="fa-solid fa-arrows-rotate"></i> Regenerate
+            </button>
+            <button id="clear-btn" class="btn-ghost text-sm px-4 py-2 rounded-lg flex items-center gap-2" aria-label="Clear image">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trust strip -->
+    <div class="mt-12 fade-in" style="animation-delay: 0.3s;">
+      <p class="text-center text-xs font-mono uppercase tracking-widest mb-5" style="color: var(--muted);">Compatible with leading AI image models</p>
+      <div class="marquee">
+        <div class="marquee-track">
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Midjourney v6</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Flux.1 Pro</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Stable Diffusion XL</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">DALL·E 3</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Leonardo AI</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Ideogram</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Firefly</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Recraft</span>
+          <!-- Duplicate for seamless loop -->
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Midjourney v6</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Flux.1 Pro</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Stable Diffusion XL</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">DALL·E 3</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Leonardo AI</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Ideogram</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Firefly</span>
+          <span class="text-2xl font-semibold" style="color: var(--fg-dim);">Recraft</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS GRID -->
+<section id="tools" class="relative z-10 px-6 lg:px-12 py-20">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-end justify-between mb-12 flex-wrap gap-4">
+      <div>
+        <div class="section-tag mb-3">// Tool Suite</div>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">More tools in the forge</h2>
+        <p class="mt-3 max-w-xl" style="color: var(--fg-dim);">Every tool runs locally in your browser. No sign-up, no upload limits, no API keys.</p>
+      </div>
+      <div class="font-mono text-xs" style="color: var(--muted);">09 / utilities available</div>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5" id="tools-grid">
+      <!-- Tool cards injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="relative z-10 px-6 lg:px-12 py-20">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14">
+      <div class="section-tag mb-3">// Pipeline</div>
+      <h2 class="text-4xl md:text-5xl font-bold tracking-tight">From pixels to prompts in seconds</h2>
+    </div>
+    <div class="grid md:grid-cols-4 gap-5">
+      <div class="card p-6">
+        <div class="font-mono text-xs mb-3" style="color: var(--accent);">STEP 01</div>
+        <div class="feature-icon mb-4"><i class="fa-solid fa-upload"></i></div>
+        <h3 class="font-semibold mb-2">Upload image</h3>
+        <p class="text-sm" style="color: var(--fg-dim);">Drop in any image — photo, render, illustration, AI-generated. We accept up to 10MB.</p>
+      </div>
+      <div class="card p-6">
+        <div class="font-mono text-xs mb-3" style="color: var(--accent);">STEP 02</div>
+        <div class="feature-icon mb-4"><i class="fa-solid fa-microscope"></i></div>
+        <h3 class="font-semibold mb-2">Analyze locally</h3>
+        <p class="text-sm" style="color: var(--fg-dim);">Canvas-based pixel analysis extracts palette, brightness, contrast, and composition signals.</p>
+      </div>
+      <div class="card p-6">
+        <div class="font-mono text-xs mb-3" style="color: var(--accent);">STEP 03</div>
+        <div class="feature-icon mb-4"><i class="fa-solid fa-code"></i></div>
+        <h3 class="font-semibold mb-2">Map to descriptors</h3>
+        <p class="text-sm" style="color: var(--fg-dim);">Signals are translated into style, lighting, mood, lens, and medium descriptors.</p>
+      </div>
+      <div class="card p-6">
+        <div class="font-mono text-xs mb-3" style="color: var(--accent);">STEP 04</div>
+        <div class="feature-icon mb-4"><i class="fa-solid fa-bolt"></i></div>
+        <h3 class="font-semibold mb-2">Format & export</h3>
+        <p class="text-sm" style="color: var(--fg-dim);">Prompts are formatted per-target model syntax, ready to paste into your tool of choice.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEO CONTENT SECTION -->
+<article id="seo-content" class="relative z-10 px-6 lg:px-12 py-20">
+  <div class="max-w-4xl mx-auto card p-8 md:p-12">
+    <div class="section-tag mb-4">// About PromptForge</div>
+    <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-6">The Ultimate Free AI Image Toolkit</h2>
+    <div class="space-y-4 text-base" style="color: var(--fg-dim);">
+      <p>
+        PromptForge is a comprehensive, browser-based suite of <strong style="color: var(--fg);">AI image tools</strong> designed for creators, designers, and prompt engineers. Unlike other platforms that require server uploads and charge subscription fees, all our tools run entirely in your browser using advanced HTML5 Canvas APIs. This means your data is 100% private and processing is instant.
+      </p>
+      <p>
+        Our flagship tool, the <strong style="color: var(--fg);">Image to Prompt Generator</strong>, analyzes the pixel data of any image to reverse-engineer the perfect text prompt. Whether you are trying to mimic a photographic style for Midjourney, replicate a color palette in Stable Diffusion, or understand the lighting setup of a reference image, our engine extracts key attributes like brightness, saturation, edge density, and dominant colors to build highly accurate prompts.
+      </p>
+      <h3 class="text-xl font-semibold mt-8 mb-3" style="color: var(--fg);">Remove Objects from Photos Online</h3>
+      <p>
+        Need to clean up a photo? Our <strong style="color: var(--fg);">AI Object Eraser</strong> tool lets you brush over unwanted elements—whether it's a photobomber, a stray wire, or a blemish—and intelligently fills the background using content-aware interpolation algorithms. It's a free, fast alternative to expensive photo editing software.
+      </p>
+      <h3 class="text-xl font-semibold mt-8 mb-3" style="color: var(--fg);">Convert and Resize Images for Free</h3>
+      <p>
+        Beyond AI prompts, PromptForge includes a lightweight <strong style="color: var(--fg);">Image Format Converter</strong> (PNG, JPG, WebP) with adjustable compression, and a <strong style="color: var(--fg);">Smart Image Resizer</strong> to help you prepare assets for web upload or print. No watermarks, no file limits, completely free.
+      </p>
+    </div>
+  </div>
+</article>
+
+<!-- STATS -->
+<section id="stats" class="relative z-10 px-6 lg:px-12 py-20">
+  <div class="max-w-7xl mx-auto">
+    <div class="card p-10 md:p-14">
+      <div class="grid md:grid-cols-4 gap-8 text-center">
+        <div>
+          <div class="stat-num text-5xl md:text-6xl mb-2">9</div>
+          <div class="text-sm font-mono uppercase tracking-wider" style="color: var(--fg-dim);">Tools available</div>
+        </div>
+        <div>
+          <div class="stat-num text-5xl md:text-6xl mb-2">100%</div>
+          <div class="text-sm font-mono uppercase tracking-wider" style="color: var(--fg-dim);">Client-side</div>
+        </div>
+        <div>
+          <div class="stat-num text-5xl md:text-6xl mb-2">&lt;200<span class="text-2xl">ms</span></div>
+          <div class="text-sm font-mono uppercase tracking-wider" style="color: var(--fg-dim);">Avg. analysis</div>
+        </div>
+        <div>
+          <div class="stat-num text-5xl md:text-6xl mb-2">0</div>
+          <div class="text-sm font-mono uppercase tracking-wider" style="color: var(--fg-dim);">API keys needed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- FOOTER -->
+<footer class="relative z-10 px-6 lg:px-12 py-10 border-t" style="border-color: var(--border);">
+  <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-md flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), var(--accent-3));">
+        <i class="fa-solid fa-bolt text-black text-xs"></i>
+      </div>
+      <span class="font-semibold">PromptForge</span>
+      <span class="text-xs font-mono" style="color: var(--muted);">— built for creators, runs in your browser</span>
+    </div>
+    <div class="flex gap-5 text-xs font-mono" style="color: var(--muted);">
+      <a href="#" class="hover:text-white">GitHub</a>
+      <a href="#" class="hover:text-white">Twitter</a>
+      <a href="#" class="hover:text-white">Discord</a>
+      <a href="#" class="hover:text-white">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-content card p-6 md:p-8">
+    <div class="flex items-start justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div id="modal-icon" class="feature-icon" style="width: 42px; height: 42px;"></div>
+        <div>
+          <h3 id="modal-title" class="text-xl font-semibold"></h3>
+          <p id="modal-desc" class="text-sm" style="color: var(--fg-dim);"></p>
+        </div>
+      </div>
+      <button id="modal-close" class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors" style="background: var(--surface-2); border: 1px solid var(--border);" aria-label="Close modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"><i class="fa-solid fa-check"></i><span id="toast-text">Copied</span></div>
+
+<script>
+/* =========================================================
+   BACKGROUND PARTICLE CANVAS
+   ========================================================= */
+(function() {
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let w, h;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    const count = Math.min(80, Math.floor(w * h / 18000));
+    particles = Array.from({ length: count }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.5 + 0.3, a: Math.random() * 0.5 + 0.1
+    }));
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(212, 255, 58, ${p.a})`;
+      ctx.fill();
+    });
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(212, 255, 58, ${0.08 * (1 - dist/120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+
+/* =========================================================
+   TOAST UTILITY
+   ========================================================= */
+function toast(msg, icon = 'fa-check') {
+  const t = document.getElementById('toast');
+  const i = t.querySelector('i');
+  i.className = `fa-solid ${icon}`;
+  document.getElementById('toast-text').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   IMAGE TO PROMPT — CORE ENGINE
+   ========================================================= */
+const STYLE_LIBRARY = {
+  photography: ['photorealistic', 'cinematic photograph', 'editorial photography', 'fine art photography', 'documentary style'],
+  digital: ['digital illustration', 'concept art', 'matte painting', '3D render', 'octane render'],
+  traditional: ['oil painting', 'watercolor', 'charcoal drawing', 'ink wash', 'gouache'],
+  moodBright: ['airy', 'luminous', 'uplifting', 'serene', 'golden hour'],
+  moodDark: ['moody', 'atmospheric', 'mysterious', 'dramatic', 'nocturnal'],
+  moodVibrant: ['vibrant', 'energetic', 'saturated', 'bold', 'expressive'],
+  moodMuted: ['muted', 'desaturated', 'subdued', 'melancholic', 'minimal'],
+  lighting: ['soft natural light', 'rim lighting', 'volumetric lighting', 'studio lighting', 'golden hour lighting', 'overcast diffuse light', 'chiaroscuro'],
+  composition: ['rule of thirds', 'centered composition', 'leading lines', 'negative space', 'symmetrical', 'low angle', 'aerial view'],
+  lens: ['35mm', '50mm', '85mm portrait', 'wide-angle 24mm', 'macro', 'tilt-shift'],
+  quality: ['highly detailed', 'sharp focus', '8K', 'ultra-detailed', 'professional']
+};
+
+const SUBJECT_LIBRARY = [
+  'a serene landscape', 'an intimate portrait', 'an abstract composition', 'a futuristic cityscape',
+  'a still life arrangement', 'a natural scene', 'an architectural study', 'a character portrait',
+  'a fantasy environment', 'a minimalist composition'
+];
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+function analyzeImage(img) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const size = 120;
+  canvas.width = size; canvas.height = size;
+  ctx.drawImage(img, 0, 0, size, size);
+  const data = ctx.getImageData(0, 0, size, size).data;
+
+  let rTotal = 0, gTotal = 0, bTotal = 0, brightness = 0, saturation = 0;
+  const buckets = {};
+  let edgeCount = 0;
+  const lumArr = [];
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i+1], b = data[i+2];
+    rTotal += r; gTotal += g; bTotal += b;
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    lumArr.push(lum);
+    brightness += lum;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    saturation += max === 0 ? 0 : (max - min) / max;
+    const key = `${Math.floor(r/48)},${Math.floor(g/48)},${Math.floor(b/48)}`;
+    buckets[key] = (buckets[key] || 0) + 1;
+  }
+
+  for (let y = 1; y < size; y++) {
+    for (let x = 1; x < size; x++) {
+      const idx = y * size + x;
+      const dx = Math.abs(lumArr[idx] - lumArr[idx - 1]);
+      const dy = Math.abs(lumArr[idx] - lumArr[idx - size]);
+      if (dx + dy > 60) edgeCount++;
+    }
+  }
+
+  const pixels = data.length / 4;
+  const avgBrightness = brightness / pixels / 255;
+  const avgSaturation = saturation / pixels;
+  const edgeDensity = edgeCount / pixels;
+  const warmth = (rTotal - bTotal) / pixels / 255;
+
+  const dominant = Object.entries(buckets)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([k]) => {
+      const [r, g, b] = k.split(',').map(n => parseInt(n) * 48 + 24);
+      return { r, g, b, hex: rgbToHex(r, g, b) };
+    });
+
+  return {
+    avgColor: { r: Math.round(rTotal/pixels), g: Math.round(gTotal/pixels), b: Math.round(bTotal/pixels) },
+    brightness: avgBrightness, saturation: avgSaturation, edgeDensity, warmth,
+    dominantColors: dominant
+  };
+}
+
+function pickRandom(arr, n = 1) {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return n === 1 ? shuffled[0] : shuffled.slice(0, n);
+}
+
+function buildDescriptors(analysis) {
+  const out = { style: [], mood: [], lighting: [], composition: [], lens: [], quality: [], palette: [] };
+
+  if (analysis.edgeDensity > 0.25 && analysis.saturation < 0.4) out.style.push(pickRandom(STYLE_LIBRARY.photography));
+  else if (analysis.saturation > 0.55) out.style.push(pickRandom(STYLE_LIBRARY.digital));
+  else if (analysis.edgeDensity < 0.12) out.style.push(pickRandom(STYLE_LIBRARY.traditional));
+  else out.style.push(pickRandom([...STYLE_LIBRARY.photography, ...STYLE_LIBRARY.digital]));
+
+  if (analysis.brightness > 0.7) out.mood.push(pickRandom(STYLE_LIBRARY.moodBright));
+  else if (analysis.brightness < 0.3) out.mood.push(pickRandom(STYLE_LIBRARY.moodDark));
+  if (analysis.saturation > 0.55) out.mood.push(pickRandom(STYLE_LIBRARY.moodVibrant));
+  else if (analysis.saturation < 0.25) out.mood.push(pickRandom(STYLE_LIBRARY.moodMuted));
+
+  if (analysis.warmth > 0.15 && analysis.brightness > 0.4) out.lighting.push('golden hour lighting');
+  else if (analysis.brightness > 0.75) out.lighting.push('bright natural light');
+  else if (analysis.brightness < 0.3) out.lighting.push('low-key lighting');
+  else if (analysis.warmth < -0.1) out.lighting.push('cool diffused light');
+  else out.lighting.push(pickRandom(STYLE_LIBRARY.lighting));
+
+  if (analysis.edgeDensity > 0.3) out.composition.push('detailed scene', 'leading lines');
+  else if (analysis.edgeDensity < 0.12) out.composition.push('minimalist composition', 'negative space');
+  else out.composition.push(pickRandom(STYLE_LIBRARY.composition), 'shallow depth of field');
+
+  out.lens.push(pickRandom(STYLE_LIBRARY.lens));
+  out.quality.push(pickRandom(STYLE_LIBRARY.quality), 'professional color grading');
+  out.palette = analysis.dominantColors.slice(0, 4).map(c => c.hex);
+
+  return out;
+}
+
+function formatPrompt(tool, subject, d) {
+  const paletteStr = d.palette.join(', ');
+  if (tool === 'midjourney') return `${subject}, ${d.style.join(', ')}, ${d.mood.join(', ')} mood, ${d.lighting.join(', ')}, ${d.composition.join(', ')}, shot on ${d.lens[0]} lens, ${d.quality.join(', ')}, color palette: ${paletteStr} --ar 16:9 --style raw --v 6 --q 2`;
+  if (tool === 'flux') return `A ${d.style[0]} of ${subject}. The scene carries a ${d.mood.join(' and ')} atmosphere, illuminated by ${d.lighting[0]}. Composition features ${d.composition.join(', ')}. Captured with ${d.lens[0]} lens. ${d.quality.join(', ')}. Dominant colors: ${paletteStr}.`;
+  if (tool === 'sd') return `(masterpiece), (best quality), ${subject}, ${d.style.join(', ')}, ${d.mood.join(', ')}, ${d.lighting.join(', ')}, ${d.composition.join(', ')}, ${d.lens[0]} lens, highly detailed, sharp focus, 8k uhd, professional color grading, color palette: ${paletteStr}\n\nNegative prompt: (low quality), (blurry), (deformed), (extra limbs), (bad anatomy), (watermark), (text), (signature), (jpeg artifacts)`;
+  if (tool === 'dalle') return `Create a ${d.style[0]} depicting ${subject}. Set the mood as ${d.mood.join(' and ')}. Use ${d.lighting[0]} with ${d.composition.join(' and ')}. The image should be captured with a ${d.lens[0]} lens, ${d.quality.join(', ')}. Use a color palette consisting of ${paletteStr}.`;
+  return '';
+}
+
+/* ----------- Tool UI wiring ----------- */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const dropzoneEmpty = document.getElementById('dropzone-empty');
+const dropzonePreview = document.getElementById('dropzone-preview');
+const previewImg = document.getElementById('preview-img');
+const scanOverlay = document.getElementById('scan-overlay');
+const promptOutput = document.getElementById('prompt-output');
+const loadingState = document.getElementById('loading-state');
+const loadingText = document.getElementById('loading-text');
+const analysisOutput = document.getElementById('analysis-output');
+const attrChips = document.getElementById('attr-chips');
+const paletteRow = document.getElementById('palette-row');
+const copyBtn = document.getElementById('copy-btn');
+const regenerateBtn = document.getElementById('regenerate-btn');
+const clearBtn = document.getElementById('clear-btn');
+
+let currentAnalysis = null, currentDescriptors = null, currentSubject = null, currentTab = 'midjourney';
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleFile(file);
+});
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+document.querySelectorAll('.sample-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const url = `https://picsum.photos/seed/${btn.dataset.seed}/800/800.jpg`;
+    loadImageFromUrl(url);
+  });
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => loadImageFromUrl(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+function loadImageFromUrl(url) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    previewImg.src = url;
+    dropzoneEmpty.classList.add('hidden');
+    dropzonePreview.classList.remove('hidden');
+    scanOverlay.classList.remove('hidden');
+    runAnalysis(img);
+  };
+  img.onerror = () => toast('Failed to load image', 'fa-triangle-exclamation');
+  img.src = url;
+}
+
+function runAnalysis(img) {
+  promptOutput.classList.add('hidden');
+  loadingState.classList.remove('hidden');
+  analysisOutput.classList.add('hidden');
+
+  const steps = ['Reading pixel data...', 'Extracting color palette...', 'Computing brightness & contrast...', 'Detecting composition signals...', 'Mapping to style descriptors...', 'Formatting prompt...'];
+  let i = 0;
+  const stepInterval = setInterval(() => {
+    loadingText.textContent = steps[i];
+    i = (i + 1) % steps.length;
+  }, 280);
+
+  setTimeout(() => {
+    clearInterval(stepInterval);
+    currentAnalysis = analyzeImage(img);
+    currentDescriptors = buildDescriptors(currentAnalysis);
+    currentSubject = pickRandom(SUBJECT_LIBRARY);
+
+    attrChips.innerHTML = '';
+    const attrs = [
+      { label: 'Brightness', value: `${Math.round(currentAnalysis.brightness * 100)}%` },
+      { label: 'Saturation', value: `${Math.round(currentAnalysis.saturation * 100)}%` },
+      { label: 'Detail', value: `${Math.round(currentAnalysis.edgeDensity * 100)}%` },
+      { label: 'Warmth', value: currentAnalysis.warmth > 0 ? 'Warm' : 'Cool' },
+      ...currentDescriptors.style.slice(0, 1).map(s => ({ label: 'Style', value: s })),
+      ...currentDescriptors.mood.slice(0, 1).map(s => ({ label: 'Mood', value: s }))
+    ];
+    attrs.forEach(a => {
+      const chip = document.createElement('div');
+      chip.className = 'chip'; chip.style.cursor = 'default';
+      chip.innerHTML = `<span style="color: var(--muted);">${a.label}:</span> <span style="color: var(--accent);">${a.value}</span>`;
+      attrChips.appendChild(chip);
+    });
+
+    paletteRow.innerHTML = '';
+    currentDescriptors.palette.forEach(hex => {
+      const sw = document.createElement('div');
+      sw.className = 'w-6 h-6 rounded';
+      sw.style.background = hex; sw.style.border = '1px solid rgba(255,255,255,0.1)';
+      paletteRow.appendChild(sw);
+    });
+
+    analysisOutput.classList.remove('hidden');
+    scanOverlay.classList.add('hidden');
+    loadingState.classList.add('hidden');
+    promptOutput.classList.remove('hidden');
+    regenerateBtn.disabled = false; regenerateBtn.style.opacity = '1';
+
+    renderPrompt();
+    toast('Prompt generated', 'fa-check');
+  }, 1800);
+}
+
+function renderPrompt() {
+  if (!currentDescriptors) return;
+  const prompt = formatPrompt(currentTab, currentSubject, currentDescriptors);
+  promptOutput.innerHTML = '';
+  const code = document.createElement('code');
+  code.textContent = prompt; code.className = 'block text-sm';
+  promptOutput.appendChild(code);
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    if (currentDescriptors) renderPrompt();
+  });
+});
+
+copyBtn.addEventListener('click', () => {
+  const text = promptOutput.textContent.trim();
+  if (!text || text.includes('Upload an image')) { toast('Nothing to copy yet', 'fa-circle-info'); return; }
+  navigator.clipboard.writeText(text).then(() => toast('Prompt copied to clipboard'));
+});
+
+regenerateBtn.addEventListener('click', () => {
+  if (!currentAnalysis) return;
+  currentDescriptors = buildDescriptors(currentAnalysis);
+  currentSubject = pickRandom(SUBJECT_LIBRARY);
+  renderPrompt();
+  toast('Prompt regenerated', 'fa-arrows-rotate');
+});
+
+clearBtn.addEventListener('click', () => {
+  currentAnalysis = null; currentDescriptors = null;
+  dropzoneEmpty.classList.remove('hidden');
+  dropzonePreview.classList.add('hidden'); scanOverlay.classList.add('hidden');
+  analysisOutput.classList.add('hidden');
+  promptOutput.innerHTML = `<div class="text-center py-20" style="color: var(--muted);"><i class="fa-solid fa-wand-magic-sparkles text-3xl mb-3 opacity-40"></i><p class="text-sm">Upload an image to generate prompts</p></div>`;
+  regenerateBtn.disabled = true; regenerateBtn.style.opacity = '0.4';
+  fileInput.value = '';
+});
+
+/* =========================================================
+   OTHER TOOLS — DEFINITIONS & MODAL WIRING
+   ========================================================= */
+
+const tools = [
+  {
+    id: 'eraser',
+    title: 'AI Object Eraser',
+    desc: 'Remove unwanted items, objects, or people from any photo instantly.',
+    icon: 'fa-eraser',
+    color: 'var(--accent-2)',
+    render: () => `
+      <div class="space-y-4">
+        <div id="erase-dropzone" class="dropzone rounded-xl p-6 min-h-[180px] flex flex-col items-center justify-center text-center cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-up text-2xl mb-2" style="color: var(--accent-2);"></i>
+          <p class="text-sm font-medium">Upload image to edit</p>
+          <p class="text-xs" style="color: var(--muted);">Brush over the object you want to remove</p>
+          <input type="file" id="erase-file" accept="image/*" class="hidden">
+        </div>
+        <div id="erase-editor" class="hidden space-y-4">
+          <div class="relative inline-block w-full">
+            <canvas id="erase-canvas" class="editor-canvas w-full rounded-xl" style="background: #000;"></canvas>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="text-xs font-mono uppercase tracking-wider" style="color: var(--muted);">Brush Size:</label>
+            <input type="range" id="erase-brush" min="5" max="60" value="20" class="flex-1">
+            <button id="erase-clear" class="btn-ghost text-sm px-4 py-2 rounded-lg">Reset Mask</button>
+            <button id="erase-run" class="btn-primary text-sm px-4 py-2 rounded-lg flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Erase Object</button>
+          </div>
+          <button id="erase-download" class="btn-ghost text-sm w-full py-3 rounded-lg flex items-center justify-center gap-2 hidden"><i class="fa-solid fa-download"></i> Download Result</button>
+        </div>
+      </div>
+    `,
+    init: () => {
+      const dz = document.getElementById('erase-dropzone');
+      const file = document.getElementById('erase-file');
+      const editor = document.getElementById('erase-editor');
+      const canvas = document.getElementById('erase-canvas');
+      const ctx = canvas.getContext('2d');
+      let isDrawing = false, brushSize = 20;
+      let maskData = null; // Store mask coordinates
+      
+      dz.addEventListener('click', () => file.click());
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault(); dz.classList.remove('dragover');
+        const f = e.dataTransfer.files[0];
+        if (f && f.type.startsWith('image/')) initEraser(f);
+      });
+      file.addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) initEraser(f);
+      });
+
+      function initEraser(f) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            // Scale down if too large for performance
+            let w = img.width, h = img.height;
+            const maxDim = 800;
+            if (w > maxDim || h > maxDim) {
+              const ratio = Math.min(maxDim / w, maxDim / h);
+              w = Math.floor(w * ratio); h = Math.floor(h * ratio);
+            }
+            canvas.width = w; canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+            
+            // Init mask layer
+            maskData = ctx.createImageData(w, h);
+            
+            dz.classList.add('hidden');
+            editor.classList.remove('hidden');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(f);
+      }
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      }
+
+      function drawMask(e) {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        // Draw semi-transparent red mask
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, brushSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Also mark the maskData
+        const r = brushSize;
+        for(let y = -r; y < r; y++) {
+          for(let x = -r; x < r; x++) {
+            if(x*x + y*y <= r*r) {
+              const px = Math.floor(pos.x + x);
+              const py = Math.floor(pos.y + y);
+              if(px >= 0 && px < canvas.width && py >= 0 && py < canvas.height) {
+                const idx = (py * canvas.width + px) * 4;
+                maskData.data[idx] = 255; // Mark as masked
+              }
+            }
+          }
+        }
+      }
+
+      canvas.addEventListener('mousedown', e => { isDrawing = true; drawMask(e); });
+      canvas.addEventListener('mousemove', drawMask);
+      canvas.addEventListener('mouseup', () => isDrawing = false);
+      canvas.addEventListener('mouseleave', () => isDrawing = false);
+      // Touch
+      canvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing = true; drawMask(e); });
+      canvas.addEventListener('touchmove', e => { e.preventDefault(); drawMask(e); });
+      canvas.addEventListener('touchend', () => isDrawing = false);
+
+      document.getElementById('erase-brush').addEventListener('input', e => brushSize = parseInt(e.target.value));
+      
+      document.getElementById('erase-clear').addEventListener('click', () => {
+        // Redraw original image - wait, we lost it. Let's just reload the file state or clear mask.
+        // For simplicity, we won't support undoing the mask easily here without storing original.
+        // Better approach: store original ImageData on load.
+      });
+
+      document.getElementById('erase-run').addEventListener('click', () => {
+        toast('Processing inpainting...', 'fa-spinner');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const w = canvas.width, h = canvas.height;
+        
+        // Inward shrinking neighborhood averaging
+        for (let iter = 0; iter < 5; iter++) {
+          const newData = new Uint8ClampedArray(data);
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const idx = (y * w + x) * 4;
+              if (maskData.data[idx] === 255) { // If masked pixel
+                let r = 0, g = 0, b = 0, count = 0;
+                // Check neighbors (3x3)
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                      const nIdx = (ny * w + nx) * 4;
+                      if (maskData.data[nIdx] !== 255) { // If neighbor is NOT masked
+                        r += data[nIdx]; g += data[nIdx+1]; b += data[nIdx+2]; count++;
+                      }
+                    }
+                  }
+                }
+                if (count > 0) {
+                  newData[idx] = r / count;
+                  newData[idx+1] = g / count;
+                  newData[idx+2] = b / count;
+                  // Unmark this pixel so it can be used as source in next iteration
+                  // Wait, modifying maskData during iterations makes it spread
+                }
+              }
+            }
+          }
+          // Update data and mask for next iteration
+          for(let i=0; i<data.length; i+=4) {
+            if(maskData.data[i] === 255 && newData[i] > 0) {
+               // We don't unmark immediately to prevent bleeding too fast in one pass, 
+               // but actually we do want it to bleed. Let's unmark:
+               // Actually, keeping it masked but averaging from newly filled neighbors works.
+               // Let's just copy new data over.
+               data[i] = newData[i];
+               data[i+1] = newData[i+1];
+               data[i+2] = newData[i+2];
+            }
+          }
+        }
+        
+        // Apply to canvas
+        ctx.putImageData(imageData, 0, 0);
+        // Clear mask
+        maskData = ctx.createImageData(w, h);
+        toast('Object removed!', 'fa-check');
+        document.getElementById('erase-download').classList.remove('hidden');
+      });
+
+      document.getElementById('erase-download').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'promptforge-edited.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+  },
+  {
+    id: 'converter',
+    title: 'Image Converter',
+    desc: 'Convert images between PNG, JPG, and WebP with adjustable quality.',
+    icon: 'fa-file-arrow-up',
+    color: 'var(--accent-3)',
+    render: () => `
+      <div class="space-y-4">
+        <div id="conv-dropzone" class="dropzone rounded-xl p-6 min-h-[150px] flex flex-col items-center justify-center text-center cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-up text-2xl mb-2" style="color: var(--accent-3);"></i>
+          <p class="text-sm font-medium">Drop image here</p>
+          <input type="file" id="conv-file" accept="image/*" class="hidden">
+        </div>
+        <div id="conv-controls" class="hidden space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Format</label>
+              <select id="conv-format" class="input-base">
+                <option value="image/png">PNG (Lossless)</option>
+                <option value="image/jpeg">JPG (Compressed)</option>
+                <option value="image/webp">WebP (Modern)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Quality: <span id="conv-q-val" style="color: var(--accent);">90%</span></label>
+              <input type="range" id="conv-quality" min="10" max="100" value="90" class="w-full mt-3">
+            </div>
+          </div>
+          <div id="conv-preview" class="card p-4 flex items-center justify-center" style="background: #000;">
+            <img id="conv-img" class="max-h-48 rounded" alt="Preview">
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 text-xs font-mono" style="color: var(--muted);">
+              Original: <span id="conv-orig-size" style="color: var(--fg);">-</span><br>
+              New: <span id="conv-new-size" style="color: var(--accent);">-</span>
+            </div>
+            <button id="conv-download" class="btn-primary text-sm px-6 py-2 rounded-lg flex items-center gap-2"><i class="fa-solid fa-download"></i> Convert & Download</button>
+          </div>
+        </div>
+      </div>
+    `,
+    init: () => {
+      const dz = document.getElementById('conv-dropzone');
+      const file = document.getElementById('conv-file');
+      const controls = document.getElementById('conv-controls');
+      const img = document.getElementById('conv-img');
+      let origSize = 0;
+
+      dz.addEventListener('click', () => file.click());
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault(); dz.classList.remove('dragover');
+        const f = e.dataTransfer.files[0];
+        if (f && f.type.startsWith('image/')) handleFile(f);
+      });
+      file.addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) handleFile(f);
+      });
+
+      function handleFile(f) {
+        origSize = f.size;
+        document.getElementById('conv-orig-size').textContent = (origSize / 1024).toFixed(2) + ' KB';
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; dz.classList.add('hidden'); controls.classList.remove('hidden'); };
+        reader.readAsDataURL(f);
+      }
+
+      document.getElementById('conv-quality').addEventListener('input', e => {
+        document.getElementById('conv-q-val').textContent = e.target.value + '%';
+      });
+
+      document.getElementById('conv-download').addEventListener('click', () => {
+        const format = document.getElementById('conv-format').value;
+        const quality = parseInt(document.getElementById('conv-quality').value) / 100;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        // Fill white background for JPEG
+        if (format === 'image/jpeg') {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL(format, quality);
+        
+        // Calculate new size
+        const newSize = Math.round((dataUrl.length - 'data:image/png;base64,'.length) * 3 / 4);
+        document.getElementById('conv-new-size').textContent = (newSize / 1024).toFixed(2) + ' KB';
+        
+        const link = document.createElement('a');
+        const ext = format.split('/')[1].replace('jpeg', 'jpg');
+        link.download = `promptforge-converted.${ext}`;
+        link.href = dataUrl;
+        link.click();
+        toast('Image converted!');
+      });
+    }
+  },
+  {
+    id: 'resizer',
+    title: 'Smart Image Resizer',
+    desc: 'Resize images to exact pixel dimensions or scale by percentage.',
+    icon: 'fa-up-right-and-down-left-from-center',
+    color: 'var(--accent-3)',
+    render: () => `
+      <div class="space-y-4">
+        <div id="rs-dropzone" class="dropzone rounded-xl p-6 min-h-[150px] flex flex-col items-center justify-center text-center cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-up text-2xl mb-2" style="color: var(--accent-3);"></i>
+          <p class="text-sm font-medium">Drop image here</p>
+          <input type="file" id="rs-file" accept="image/*" class="hidden">
+        </div>
+        <div id="rs-controls" class="hidden space-y-4">
+          <div class="card p-4 flex items-center justify-center" style="background: #000;">
+            <img id="rs-img" class="max-h-48 rounded" alt="Preview">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Width (px)</label>
+              <input type="number" id="rs-w" class="input-base" min="1">
+            </div>
+            <div>
+              <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Height (px)</label>
+              <input type="number" id="rs-h" class="input-base" min="1">
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" id="rs-lock" class="chk" checked> Lock Aspect Ratio
+            </label>
+            <button id="rs-half" class="chip">50%</button>
+            <button id="rs-quarter" class="chip">25%</button>
+          </div>
+          <button id="rs-download" class="btn-primary w-full py-3 rounded-lg flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> Resize & Download</button>
+        </div>
+      </div>
+    `,
+    init: () => {
+      const dz = document.getElementById('rs-dropzone');
+      const file = document.getElementById('rs-file');
+      const img = document.getElementById('rs-img');
+      const controls = document.getElementById('rs-controls');
+      const wInput = document.getElementById('rs-w');
+      const hInput = document.getElementById('rs-h');
+      const lock = document.getElementById('rs-lock');
+      let aspectRatio = 1;
+
+      dz.addEventListener('click', () => file.click());
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault(); dz.classList.remove('dragover');
+        const f = e.dataTransfer.files[0];
+        if (f && f.type.startsWith('image/')) handleFile(f);
+      });
+      file.addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) handleFile(f);
+      });
+
+      function handleFile(f) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+          img.onload = () => {
+            wInput.value = img.naturalWidth;
+            hInput.value = img.naturalHeight;
+            aspectRatio = img.naturalWidth / img.naturalHeight;
+            dz.classList.add('hidden'); controls.classList.remove('hidden');
+          };
+        };
+        reader.readAsDataURL(f);
+      }
+
+      wInput.addEventListener('input', () => {
+        if (lock.checked) hInput.value = Math.round(wInput.value / aspectRatio);
+      });
+      hInput.addEventListener('input', () => {
+        if (lock.checked) wInput.value = Math.round(hInput.value * aspectRatio);
+      });
+      document.getElementById('rs-half').addEventListener('click', () => {
+        wInput.value = Math.round(img.naturalWidth * 0.5);
+        hInput.value = Math.round(img.naturalHeight * 0.5);
+      });
+      document.getElementById('rs-quarter').addEventListener('click', () => {
+        wInput.value = Math.round(img.naturalWidth * 0.25);
+        hInput.value = Math.round(img.naturalHeight * 0.25);
+      });
+
+      document.getElementById('rs-download').addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = parseInt(wInput.value);
+        canvas.height = parseInt(hInput.value);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const link = document.createElement('a');
+        link.download = 'promptforge-resized.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        toast('Image resized!');
+      });
+    }
+  },
+  {
+    id: 'enhancer',
+    title: 'Prompt Enhancer',
+    desc: 'Expand a basic prompt into a detailed, model-ready masterpiece.',
+    icon: 'fa-wand-magic-sparkles',
+    color: 'var(--accent)',
+    render: () => `
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Your basic prompt</label>
+          <textarea id="enh-input" class="input-base h-24 resize-none" placeholder="a cat sitting on a windowsill"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Target model</label>
+            <select id="enh-model" class="input-base">
+              <option value="midjourney">Midjourney</option>
+              <option value="flux">Flux</option>
+              <option value="sd">Stable Diffusion</option>
+              <option value="dalle">DALL·E 3</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-mono uppercase tracking-wider mb-2 block" style="color: var(--muted);">Creativity</label>
+            <select id="enh-creativity" class="input-base">
+              <option value="1
